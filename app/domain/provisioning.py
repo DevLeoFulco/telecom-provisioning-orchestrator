@@ -1,46 +1,68 @@
 from dataclasses import dataclass
 from enum import Enum
-from app.domain.exceptions import InvalidBandwidthError
+
+from app.domain.exceptions import (
+    InvalidBandwidthError,
+    InvalidCustomerIdError,
+    InvalidLocationError,
+    InvalidServiceTypeError,
+)
 
 
 class ServiceType(str, Enum):
     FIBER = "FIBER"
-    MPLS = "MPLS"
-    INTERNET = "INTERNET"
+    MOBILE = "MOBILE"
+    BROADBAND = "BROADBAND"
 
 
 class ProvisioningStatus(str, Enum):
-    REQUESTED = "REQUESTED"
+    PENDING = "PENDING"
     VALIDATING_CUSTOMER = "VALIDATING_CUSTOMER"
     CHECKING_NETWORK = "CHECKING_NETWORK"
-    RESERVING_RESOURCE = "RESERVING_RESOURCE"
-    PROVISIONING = "PROVISIONING"
-    ACTIVATED = "ACTIVATED"
+    COMPLETED = "COMPLETED"
     FAILED = "FAILED"
-
-
-@dataclass(frozen=True)
-class Location:
-    city: str
-    state: str
 
 
 @dataclass
 class Provisioning:
-    provisioning_id: str
     customer_id: str
     service_type: ServiceType
     bandwidth: int
-    location: Location
-    status: ProvisioningStatus
+    city: str
+    state: str
+    status: ProvisioningStatus = ProvisioningStatus.PENDING
 
-    def __post_init__(self):
-        if self.bandwidth <= 0:
-            raise InvalidBandwidthError(
-                "Bandwidth must be greater than zero."
+    def __post_init__(self) -> None:
+        self._validate_customer_id()
+        self._validate_service_type()
+        self._validate_bandwidth()
+        self._validate_location()
+
+    def _validate_customer_id(self) -> None:
+        if not self.customer_id or len(self.customer_id.strip()) < 3:
+            raise InvalidCustomerIdError(
+                "customer_id deve possuir pelo menos 3 caracteres."
             )
 
-        if self.bandwidth > 10000:
+    def _validate_service_type(self) -> None:
+        if not isinstance(self.service_type, ServiceType):
+            raise InvalidServiceTypeError(
+                "service_type inválido."
+            )
+
+    def _validate_bandwidth(self) -> None:
+        if self.bandwidth <= 0:
             raise InvalidBandwidthError(
-                "Bandwidth cannot exceed 10000 Mbps."
+                "bandwidth deve ser maior que zero."
+            )
+
+    def _validate_location(self) -> None:
+        if not self.city or len(self.city.strip()) < 2:
+            raise InvalidLocationError(
+                "city deve possuir pelo menos 2 caracteres."
+            )
+
+        if not self.state or len(self.state.strip()) != 2:
+            raise InvalidLocationError(
+                "state deve possuir exatamente 2 caracteres."
             )
