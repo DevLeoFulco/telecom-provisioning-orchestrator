@@ -1,12 +1,18 @@
-from app.application.ports.provisioning_repository import ProvisioningRepository
+from app.application.output.ports.provisioning_repository import (
+    ProvisioningRepository,
+)
 from app.domain.provisioning import Provisioning
 
 
-class FakeProvisioningRepository(ProvisioningRepository):
+class FakeProvisioningRepository(
+    ProvisioningRepository
+):
+    def __init__(self) -> None:
+        self.saved: list[Provisioning] = []
 
-    def __init__(self):
-        self.saved_provisioning: Provisioning | None = None
-
-    def save(self, provisioning: Provisioning) -> Provisioning:
-        self.saved_provisioning = provisioning
+    async def save(
+        self,
+        provisioning: Provisioning
+    ) -> Provisioning:
+        self.saved.append(provisioning)
         return provisioning
