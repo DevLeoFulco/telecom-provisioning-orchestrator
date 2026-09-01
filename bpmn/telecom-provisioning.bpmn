@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1tj34by" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.50.1" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.9.0">
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1tj34by" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.50.1" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.9.0">
   <bpmn:process id="telecom-provisioning" name="Telecom Service Provisioning" isExecutable="true">
     <bpmn:startEvent id="StartEvent_1" name="Solicitação de Provisionamento Recebida">
       <bpmn:outgoing>Flow_1x4to5u</bpmn:outgoing>
@@ -9,39 +9,136 @@
         <zeebe:taskDefinition type="validate-customer" />
       </bpmn:extensionElements>
       <bpmn:incoming>Flow_1x4to5u</bpmn:incoming>
-      <bpmn:outgoing>Flow_0akugo7</bpmn:outgoing>
+      <bpmn:outgoing>Flow_045b7u1</bpmn:outgoing>
     </bpmn:serviceTask>
     <bpmn:sequenceFlow id="Flow_1x4to5u" sourceRef="StartEvent_1" targetRef="Activity_01qsiq8" />
-    <bpmn:endEvent id="Event_1iaj3k2" name="Provisionamento Validado">
-      <bpmn:incoming>Flow_0akugo7</bpmn:incoming>
+    <bpmn:endEvent id="Event_1iaj3k2" name="Provisionamento Apto">
+      <bpmn:incoming>Flow_0nzbbn0</bpmn:incoming>
     </bpmn:endEvent>
-    <bpmn:sequenceFlow id="Flow_0akugo7" sourceRef="Activity_01qsiq8" targetRef="Event_1iaj3k2" />
+    <bpmn:serviceTask id="Activity_1hnjrrm" name="Verificar Disponibilidade de Rede">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="check-network-availability" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_110j6ws</bpmn:incoming>
+      <bpmn:outgoing>Flow_163hgp2</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="Gateway_0ffgnkt" name="Cliente válido?">
+      <bpmn:incoming>Flow_045b7u1</bpmn:incoming>
+      <bpmn:outgoing>Flow_110j6ws</bpmn:outgoing>
+      <bpmn:outgoing>Flow_00wcewk</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_110j6ws" name="SIM" sourceRef="Gateway_0ffgnkt" targetRef="Activity_1hnjrrm">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=customer_valid = true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:endEvent id="Event_0dlxq5h">
+      <bpmn:incoming>Flow_00wcewk</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_00wcewk" name="NÃO" sourceRef="Gateway_0ffgnkt" targetRef="Event_0dlxq5h">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=customer_valid = false</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_045b7u1" sourceRef="Activity_01qsiq8" targetRef="Gateway_0ffgnkt" />
+    <bpmn:exclusiveGateway id="Gateway_0z76s0n" name="Rede disponível?">
+      <bpmn:incoming>Flow_163hgp2</bpmn:incoming>
+      <bpmn:outgoing>Flow_0nzbbn0</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1yjobxo</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_163hgp2" sourceRef="Activity_1hnjrrm" targetRef="Gateway_0z76s0n" />
+    <bpmn:sequenceFlow id="Flow_0nzbbn0" name="SIM" sourceRef="Gateway_0z76s0n" targetRef="Event_1iaj3k2">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=network_available = true</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:endEvent id="Event_1v966ol" name="Rede Indisponível">
+      <bpmn:incoming>Flow_1yjobxo</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1yjobxo" name="NÃO" sourceRef="Gateway_0z76s0n" targetRef="Event_1v966ol">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=network_available = false</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
     <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="telecom-provisioning">
       <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
-        <dc:Bounds x="182" y="102" width="36" height="36" />
+        <dc:Bounds x="182" y="232" width="36" height="36" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="159" y="145" width="82" height="40" />
+          <dc:Bounds x="159" y="275" width="82" height="40" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="Activity_01qsiq8_di" bpmnElement="Activity_01qsiq8">
-        <dc:Bounds x="280" y="80" width="100" height="80" />
+        <dc:Bounds x="280" y="210" width="100" height="80" />
         <bpmndi:BPMNLabel />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="Event_1iaj3k2_di" bpmnElement="Event_1iaj3k2">
-        <dc:Bounds x="452" y="102" width="36" height="36" />
+      <bpmndi:BPMNShape id="Gateway_0ffgnkt_di" bpmnElement="Gateway_0ffgnkt" isMarkerVisible="true">
+        <dc:Bounds x="465" y="225" width="50" height="50" />
         <bpmndi:BPMNLabel>
-          <dc:Bounds x="429" y="145" width="82" height="27" />
+          <dc:Bounds x="522.5" y="243" width="73" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1hnjrrm_di" bpmnElement="Activity_1hnjrrm">
+        <dc:Bounds x="630" y="130" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0dlxq5h_di" bpmnElement="Event_0dlxq5h">
+        <dc:Bounds x="642" y="332" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0z76s0n_di" bpmnElement="Gateway_0z76s0n" isMarkerVisible="true">
+        <dc:Bounds x="835" y="145" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="887" y="163" width="86" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1iaj3k2_di" bpmnElement="Event_1iaj3k2">
+        <dc:Bounds x="1022" y="82" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="999" y="125" width="82" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1v966ol_di" bpmnElement="Event_1v966ol">
+        <dc:Bounds x="1022" y="232" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="996" y="275" width="89" height="14" />
         </bpmndi:BPMNLabel>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="Flow_1x4to5u_di" bpmnElement="Flow_1x4to5u">
-        <di:waypoint x="218" y="120" />
-        <di:waypoint x="280" y="120" />
+        <di:waypoint x="218" y="250" />
+        <di:waypoint x="280" y="250" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="Flow_0akugo7_di" bpmnElement="Flow_0akugo7">
-        <di:waypoint x="380" y="120" />
-        <di:waypoint x="452" y="120" />
+      <bpmndi:BPMNEdge id="Flow_045b7u1_di" bpmnElement="Flow_045b7u1">
+        <di:waypoint x="380" y="250" />
+        <di:waypoint x="465" y="250" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_110j6ws_di" bpmnElement="Flow_110j6ws">
+        <di:waypoint x="490" y="225" />
+        <di:waypoint x="490" y="170" />
+        <di:waypoint x="630" y="170" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="495" y="192.5" width="20" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_00wcewk_di" bpmnElement="Flow_00wcewk">
+        <di:waypoint x="490" y="275" />
+        <di:waypoint x="490" y="350" />
+        <di:waypoint x="642" y="350" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="493" y="309.5" width="24" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_163hgp2_di" bpmnElement="Flow_163hgp2">
+        <di:waypoint x="730" y="170" />
+        <di:waypoint x="835" y="170" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0nzbbn0_di" bpmnElement="Flow_0nzbbn0">
+        <di:waypoint x="860" y="145" />
+        <di:waypoint x="860" y="100" />
+        <di:waypoint x="1022" y="100" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="865" y="119.5" width="20" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1yjobxo_di" bpmnElement="Flow_1yjobxo">
+        <di:waypoint x="860" y="195" />
+        <di:waypoint x="860" y="250" />
+        <di:waypoint x="1022" y="250" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="863" y="229.5" width="24" height="14" />
+        </bpmndi:BPMNLabel>
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
