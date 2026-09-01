@@ -1,5 +1,8 @@
 from fastapi import FastAPI
 
+from app.infrastructure.input.api.network_inventory_router import (
+    router as network_inventory_router,
+)
 from app.infrastructure.input.api.provisioning_router import (
     router as provisioning_router,
 )
@@ -13,6 +16,10 @@ app = FastAPI(
 
 app.include_router(
     provisioning_router
+)
+
+app.include_router(
+    network_inventory_router
 )
 
 
